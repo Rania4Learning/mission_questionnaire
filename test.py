@@ -1,14 +1,17 @@
-import os
 import unittest
 from unittest.mock import patch
 import questionnaire
+import os
+import questionnaire_import
+import json
 
 
 def additionner(a, b):
-    return a+b
+    return a + b
+
 
 def conversion_nombre():
-    num_str = input("Rentrez un nombre: ")
+    num_str = input("Rentrez un nombre : ")
     return int(num_str)
 
 
@@ -30,12 +33,14 @@ class TestsUnitaireDemo(unittest.TestCase):
         self.assertEqual(additionner(-6, -10), -16)
 
     def test_conversion_nombre_valide(self):
-        with patch("builtins.input", return_value = "10"):
+        with patch("builtins.input", return_value="10"):
             self.assertEqual(conversion_nombre(), 10)
+        with patch("builtins.input", return_value="100"):
+            self.assertEqual(conversion_nombre(), 100)
 
-    def test_conversion_nombre_invalide(self):
-        with patch("builtins.input", return_value = "abcd"):
-            self.assertRaises(ValueError,conversion_nombre)
+    def test_conversion_entree_invalide(self):
+        with patch("builtins.input", return_value="abcd"):
+            self.assertRaises(ValueError, conversion_nombre)
 
 
 class TestsQuestion(unittest.TestCase):
@@ -70,8 +75,8 @@ class TestsQuestionnaire(unittest.TestCase):
         filename = os.path.join("test_data", "format_invalide1.json")
         q = questionnaire.Questionnaire.from_json_file(filename)
         self.assertIsNotNone(q)
-        self.assertEqual(q.categorie, "inconnu")
-        self.assertEqual(q.difficulte, "inconnu")
+        self.assertEqual(q.categorie, "inconnue")
+        self.assertEqual(q.difficulte, "inconnue")
         self.assertIsNotNone(q.questions)
 
         filename = os.path.join("test_data", "format_invalide2.json")
@@ -83,5 +88,41 @@ class TestsQuestionnaire(unittest.TestCase):
         self.assertIsNone(q)
 
 
+class TestsImportQuestionnaire(unittest.TestCase):
+    def test_import_format_json(self):
+        questionnaire_import.generate_json_file("Animaux", "Les chats",
+                                                "https://www.kiwime.com/oqdb/files/1050828847/OpenQuizzDB_050/openquizzdb_50.json")
+
+        filenames = ("animaux_leschats_confirme.json", "animaux_leschats_debutant.json", "animaux_leschats_expert.json")
+
+        for filename in filenames:
+            self.assertTrue(os.path.isfile(filename))
+            file = open(filename, "r")
+            json_data = file.read()
+            file.close()
+            try:
+                data = json.loads(json_data)
+            except:
+                self.fail("Problème de désérialisation pour le fichier " + filename)
+
+            self.assertIsNotNone(data.get("titre"))
+            self.assertIsNotNone(data.get("questions"))
+            self.assertIsNotNone(data.get("difficulte"))
+            self.assertIsNotNone(data.get("categorie"))
+
+            for question in data.get("questions"):
+                self.assertIsNotNone(question.get("titre"))
+                self.assertIsNotNone(question.get("choix"))
+                for choix in question.get("choix"):
+                    self.assertGreater(len(choix[0]), 0)
+                    self.assertTrue(isinstance(choix[1], bool))
+                bonne_reponses = [i[0] for i in question.get("choix") if i[1]]
+                self.assertEqual(len(bonne_reponses), 1)
+
+            # titre, questions, difficulte, categorie
+            # question -> titre, choix
+            #   choix -> longueur du titre > 0
+            #         -> 2ème champ est bien un bool isinstance(..., bool)
+            #   -> il y a bien une seule bonne réponse
 
 

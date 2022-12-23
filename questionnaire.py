@@ -63,9 +63,9 @@ class Questionnaire:
         questions = [i for i in questions if i]
 
         if not data.get("categorie"):
-            data["categorie"] = "inconnu"
+            data["categorie"] = "inconnue"
         if not data.get("difficulte"):
-            data["difficulte"] = "inconnu"
+            data["difficulte"] = "inconnue"
         if not data.get("titre"):
             return None
 
