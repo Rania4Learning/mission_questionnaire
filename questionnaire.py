@@ -57,6 +57,8 @@ class Questionnaire:
         self.difficulte = difficulte
 
     def from_json_data(data):
+        if not data.get("questions"):
+            return None
         questionnaire_data_questions = data["questions"]
         questions = [Question.from_json_data(i) for i in questionnaire_data_questions]
         #Supprime les questions nNone qui n'ont pas pu être crees
@@ -90,7 +92,7 @@ class Questionnaire:
         print("QUESTIONNAIRE :" + self.titre)
         print("    Catégorie: " + self.categorie)
         print("    Difficulté: " + self.difficulte)
-        print("    Nombre de questions: " + str(len(self.questions)))
+        print("    Nombre de questions: " + str(nb_questions))
         print("-----")
 
 
